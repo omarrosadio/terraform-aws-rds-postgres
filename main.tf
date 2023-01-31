@@ -54,9 +54,8 @@ resource "random_id" "password" {
   byte_length = 8
 }
 
-resource "aws_db_instance" "this" {
-  # Ignore changes on password as it is expected to be changed outside of Terraform
-  # Ignore changes on snapshot_identifier as it is expected to use this one time only when restoring from snapshot
+resource "aws_db_instance" "rds_instance" {
+
   lifecycle {
     ignore_changes = [
       password,
@@ -64,32 +63,25 @@ resource "aws_db_instance" "this" {
     ]
   }
 
-  identifier = random_id.db_identifier.hex
-
-  # Indicates that this instance is a read replica
-  replicate_source_db = var.replicate_source_db
-
-  engine             = "postgres"
-  engine_version     = var.engine_version
-  instance_class     = var.instance_class
-  username           = var.username
-  password           = local.password
-  port               = var.port
-  ca_cert_identifier = var.ca_cert_identifier
-
+  identifier            = random_id.db_identifier.hex
+  engine                = "postgres"
+  engine_version        = var.engine_version
+  instance_class        = var.instance_class
+  username              = var.username
+  password              = local.password
+  port                  = var.port
+  multi_az              = local.multi_az
   allocated_storage     = var.allocated_storage
   max_allocated_storage = var.max_allocated_storage
   storage_type          = var.storage_type
   iops                  = var.iops
   storage_encrypted     = var.storage_encrypted
   kms_key_id            = var.kms_key_id
-
+  ca_cert_identifier    = var.ca_cert_identifier
   vpc_security_group_ids = flatten([
     var.vpc_security_group_ids,
     var.bastion_security_group_id
   ])
-
-  multi_az            = local.multi_az
   publicly_accessible = false
 
   db_subnet_group_name = var.db_subnet_group_name
